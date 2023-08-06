@@ -34,15 +34,10 @@ auto background_gradient_stop = SDL_Color{
 
 auto fg = SDL_Color{255, 255, 255, 255};
 
-struct Shape {
-	std::vector<SDL_Vertex> vertices;
-	std::vector<int> indicies;
-};
-
 constexpr float Pi = 3.14159265359f;
 
-auto circle(int n_segments, float r, SDL_FPoint center, SDL_Color color) -> Shape {
-	Shape shape;
+auto circle(int n_segments, float r, SDL_FPoint center, SDL_Color color) -> ui::Polygon {
+	ui::Polygon shape;
     shape.vertices.resize(n_segments + 1);
     float segRotationAngle = (360.f / n_segments) * (Pi / 180.f);
     shape.vertices[0].position = center;
@@ -121,7 +116,7 @@ auto main() -> int {
 		.a = 255,
 	};
 
-	auto background = Shape{
+	auto background = ui::Polygon{
 		.vertices = {
 			{ SDL_FPoint{(float)0, (float)0}, background_gradient_start, SDL_FPoint{0}},
 			{ SDL_FPoint{(float)0, (float)h}, halfway, SDL_FPoint{0}},
@@ -172,8 +167,7 @@ auto main() -> int {
 		}
 
 		SDL_RenderClear(ui::renderer);
-		SDL_RenderGeometry(ui::renderer, nullptr, background.vertices.data(), background.vertices.size(), background.indicies.data(), background.indicies.size());
-		//SDL_RenderGeometry(ui::renderer, nullptr, circ.vertices.data(), circ.vertices.size(), circ.indicies.data(), circ.indicies.size());
+		ui::draw(background);
 
 		auto sel_rect = SDL_Rect{
 			.x = 100,

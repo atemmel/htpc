@@ -61,6 +61,17 @@ auto draw(const Text& text) -> void {
 	SDL_RenderCopy(ui::renderer, text.texture, nullptr, &text.rect);
 }
 
+auto draw(const Polygon& polygon) -> void {
+	SDL_RenderGeometry(
+			ui::renderer, 
+			nullptr, 
+			polygon.vertices.data(), 
+			polygon.vertices.size(), 
+			polygon.indicies.data(), 
+			polygon.indicies.size());
+
+}
+
 auto text(TTF_Font* font, const char* text, SDL_Color color) -> Text {
 	auto surface = TTF_RenderUTF8_Blended(font, text, {255, 255, 255, 255});
 	auto rect = SDL_Rect{

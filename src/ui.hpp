@@ -2,6 +2,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
+#include <vector>
+
 namespace ui {
 
 struct Text {
@@ -9,6 +11,11 @@ struct Text {
 	SDL_Rect rect;
 
 	auto destroy() -> void;
+};
+
+struct Polygon {
+	std::vector<SDL_Vertex> vertices;
+	std::vector<int> indicies;
 };
 
 extern SDL_Window* window;
@@ -19,6 +26,8 @@ auto init() -> void;
 auto quit() -> void;
 
 auto draw(const Text& text) -> void;
+
+auto draw(const Polygon& polygon) -> void;
 
 auto displayMode() -> SDL_DisplayMode;
 
