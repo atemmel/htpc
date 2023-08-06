@@ -1,4 +1,6 @@
+#include "math.hpp"
 #include "ui.hpp"
+
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
@@ -71,6 +73,40 @@ auto draw(const Polygon& polygon) -> void {
 			polygon.indicies.size());
 
 }
+
+auto circle(int n_segments, float r, SDL_FPoint center, SDL_Color color) -> ui::Polygon {
+	ui::Polygon shape;
+    shape.vertices.resize(n_segments + 1);
+    float segRotationAngle = (360.f / n_segments) * (Pi / 180.f);
+    shape.vertices[0].position = center;
+    shape.vertices[0].color = color;
+
+    float startX = 0.f - r;
+    float startY = 0.f;
+
+    for(int i = 1; i < n_segments + 1; i++) {
+        float finalSegRotationAngle = (i * segRotationAngle);
+        shape.vertices[i].position.x = cos(finalSegRotationAngle) * startX - sin(finalSegRotationAngle) * startY;
+        shape.vertices[i].position.y = cos(finalSegRotationAngle) * startY + sin(finalSegRotationAngle) * startX;
+
+        shape.vertices[i].position.x += center.x;
+        shape.vertices[i].position.y += center.y;
+        shape.vertices[i].color = color;
+
+        shape.indicies.push_back(0);
+        shape.indicies.push_back(i);
+
+        int index = (i + 1) % n_segments;
+        if (index == 0)
+        {
+            index = n_segments;
+        }
+        shape.indicies.push_back(index);
+    }
+
+	return shape;
+}
+
 
 auto text(TTF_Font* font, const char* text, SDL_Color color) -> Text {
 	auto surface = TTF_RenderUTF8_Blended(font, text, {255, 255, 255, 255});

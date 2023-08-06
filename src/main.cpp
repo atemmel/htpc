@@ -1,5 +1,7 @@
 #include "image.hpp"
+#include "math.hpp"
 #include "ui.hpp"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_blendmode.h>
 #include <SDL2/SDL_events.h>
@@ -13,7 +15,6 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
 
-#include <cmath>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -34,41 +35,6 @@ auto background_gradient_stop = SDL_Color{
 
 auto fg = SDL_Color{255, 255, 255, 255};
 
-constexpr float Pi = 3.14159265359f;
-
-auto circle(int n_segments, float r, SDL_FPoint center, SDL_Color color) -> ui::Polygon {
-	ui::Polygon shape;
-    shape.vertices.resize(n_segments + 1);
-    float segRotationAngle = (360.f / n_segments) * (Pi / 180.f);
-    shape.vertices[0].position = center;
-    shape.vertices[0].color = color;
-
-    float startX = 0.f - r;
-    float startY = 0.f;
-
-    for(int i = 1; i < n_segments + 1; i++) {
-        float finalSegRotationAngle = (i * segRotationAngle);
-        shape.vertices[i].position.x = cos(finalSegRotationAngle) * startX - sin(finalSegRotationAngle) * startY;
-        shape.vertices[i].position.y = cos(finalSegRotationAngle) * startY + sin(finalSegRotationAngle) * startX;
-
-        shape.vertices[i].position.x += center.x;
-        shape.vertices[i].position.y += center.y;
-        shape.vertices[i].color = color;
-
-        shape.indicies.push_back(0);
-        shape.indicies.push_back(i);
-
-        int index = (i + 1) % n_segments;
-        if (index == 0)
-        {
-            index = n_segments;
-        }
-        shape.indicies.push_back(index);
-    }
-
-	return shape;
-}
-
 auto main() -> int {
 	ui::init();
 	
@@ -83,10 +49,12 @@ auto main() -> int {
 	auto w = mode.w;
 	auto h = mode.h;
 
+	/*
 	auto background_surface = image::gradient(background_gradient_start, background_gradient_stop, w / 8, h / 8);
 
 	auto background_texture = SDL_CreateTextureFromSurface(ui::renderer, background_surface);
 	SDL_FreeSurface(background_surface);
+	*/
 
 
 	std::vector<std::string> menu = {
@@ -109,27 +77,32 @@ auto main() -> int {
 
 	size_t selection = 0;
 
+	const auto start = background_gradient_start, stop = background_gradient_stop;
+
 	auto halfway = SDL_Color{
-		.r = (Uint8)std::lerp((float)background_gradient_start.r, (float)background_gradient_stop.r, 0.5f),
-		.g = (Uint8)std::lerp((float)background_gradient_start.g, (float)background_gradient_stop.g, 0.5f),
-		.b = (Uint8)std::lerp((float)background_gradient_start.b, (float)background_gradient_stop.b, 0.5f),
+		.r = (Uint8)std::lerp((float)start.r, (float)stop.r, 0.5f),
+		.g = (Uint8)std::lerp((float)start.g, (float)stop.g, 0.5f),
+		.b = (Uint8)std::lerp((float)start.b, (float)stop.b, 0.5f),
 		.a = 255,
 	};
 
+	const float w_f = w, h_f = h;
+
 	auto background = ui::Polygon{
 		.vertices = {
-			{ SDL_FPoint{(float)0, (float)0}, background_gradient_start, SDL_FPoint{0}},
-			{ SDL_FPoint{(float)0, (float)h}, halfway, SDL_FPoint{0}},
-			{ SDL_FPoint{(float)w, (float)h}, background_gradient_stop, SDL_FPoint{0}},
-			{ SDL_FPoint{(float)w, (float)0}, halfway, SDL_FPoint{0}},
+			{ SDL_FPoint{0.f, 0.f}, start, SDL_FPoint{0}},
+			{ SDL_FPoint{0.f, h_f}, halfway, SDL_FPoint{0}},
+			{ SDL_FPoint{w_f, h_f}, stop, SDL_FPoint{0}},
+			{ SDL_FPoint{w_f, 0.f}, halfway, SDL_FPoint{0}},
 		},
 		.indicies = {
-			0, 1, 2, 0, 2, 3,
+			0, 1, 2, 
+			0, 2, 3,
 		},
 
 	};
 
-	//auto circ = circle(10, 10, SDL_FPoint{300, 300}, SDL_Color{255, 255, 255, 20});
+	//auto circ = ui::circle(10, 10, SDL_FPoint{300, 300}, SDL_Color{255, 255, 255, 20});
 
 	SDL_SetRenderDrawBlendMode(ui::renderer, SDL_BLENDMODE_BLEND);
 	
@@ -191,10 +164,10 @@ auto main() -> int {
 		SDL_Delay(16);
 	}
 
-	SDL_DestroyTexture(background_texture);
 	for(auto& text : texts) {
 		text.destroy();
 	}
+
 	TTF_CloseFont(font);
 	ui::quit();
 }

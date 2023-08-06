@@ -31,6 +31,8 @@ auto draw(const Polygon& polygon) -> void;
 
 auto displayMode() -> SDL_DisplayMode;
 
+auto circle(int n_segments, float r, SDL_FPoint center, SDL_Color color) -> ui::Polygon;
+
 auto text(TTF_Font* font, const char* text, SDL_Color color) -> Text;
 
 }
