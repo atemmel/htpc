@@ -14,8 +14,14 @@ struct Text {
 };
 
 struct Polygon {
+	float offset_x = 0;
+	float offset_y = 0;
 	std::vector<SDL_Vertex> vertices;
 	std::vector<int> indicies;
+
+	auto move(float x, float y) -> void;
+
+	auto setOffset(float x, float y) -> void;
 };
 
 extern SDL_Window* window;
@@ -24,6 +30,8 @@ extern SDL_Renderer* renderer;
 auto init() -> void;
 
 auto quit() -> void;
+
+auto pollAxis(Uint32 axis) -> float;
 
 auto draw(const Text& text) -> void;
 

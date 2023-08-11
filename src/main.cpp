@@ -12,6 +12,7 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_surface.h>
+#include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
 
@@ -35,6 +36,36 @@ auto background_gradient_stop = SDL_Color{
 
 auto fg = SDL_Color{255, 255, 255, 255};
 
+size_t selection = 0;
+
+std::vector<ui::Text> texts;
+
+auto select(size_t idx) -> void {
+	SDL_SetTextureColorMod(texts[idx].texture, 50, 50, 50);
+}
+
+auto unselect(size_t idx) -> void {
+	SDL_SetTextureColorMod(texts[idx].texture, 255, 255, 255);
+}
+
+auto up() -> void {
+	if(selection == 0) {
+		return;
+	}
+	unselect(selection);
+	selection--;
+	select(selection);
+}
+
+auto down() -> void {
+	if(selection == texts.size() -1) {
+		return;
+	}
+	unselect(selection);
+	selection++;
+	select(selection);
+}
+
 auto main() -> int {
 	ui::init();
 	
@@ -49,21 +80,18 @@ auto main() -> int {
 	auto w = mode.w;
 	auto h = mode.h;
 
-	/*
-	auto background_surface = image::gradient(background_gradient_start, background_gradient_stop, w / 8, h / 8);
-
-	auto background_texture = SDL_CreateTextureFromSurface(ui::renderer, background_surface);
-	SDL_FreeSurface(background_surface);
-	*/
-
-
 	std::vector<std::string> menu = {
 		"Start",
 		"Media",
 		"Settings",
+		"A",
+		"B",
+		"C",
+		"D",
+		"E",
+		"F",
 	};
 
-	std::vector<ui::Text> texts;
 	texts.reserve(menu.size());
 	{
 		Uint32 y = 200;
@@ -74,8 +102,6 @@ auto main() -> int {
 			y += 100;
 		}
 	}
-
-	size_t selection = 0;
 
 	const auto start = background_gradient_start, stop = background_gradient_stop;
 
@@ -102,9 +128,14 @@ auto main() -> int {
 
 	};
 
-	//auto circ = ui::circle(10, 10, SDL_FPoint{300, 300}, SDL_Color{255, 255, 255, 20});
+	auto marker_border = ui::circle(50, 50.f, {0.f, 0.f}, {255, 255, 255, 255});
 
-	SDL_SetRenderDrawBlendMode(ui::renderer, SDL_BLENDMODE_BLEND);
+	select(selection);
+
+	Uint64 prev_axis_motion_timestamp = SDL_GetTicks64();
+	float prev_axis_y = 0;
+	bool traversing = false;
+	Uint64 last_traversal = SDL_GetTicks64();
 	
 	auto running = true;
 	while(running) {
@@ -119,40 +150,78 @@ auto main() -> int {
 							running = false;
 							break;
 						case SDLK_k:
-							if(selection == 0) {
-								break;
-							}
-							SDL_SetTextureColorMod(texts[selection].texture, 255, 255, 255);
-							selection--;
-							SDL_SetTextureColorMod(texts[selection].texture, 50, 50, 50);
+							up();
 							break;
 						case SDLK_j:
-							if(selection == texts.size() -1) {
-								break;
-							}
-							SDL_SetTextureColorMod(texts[selection].texture, 255, 255, 255);
-							selection++;
-							SDL_SetTextureColorMod(texts[selection].texture, 50, 50, 50);
+							down();
 							break;
 					}
 					break;
 			}
 		}
 
+		auto now = SDL_GetTicks64();
+		auto axis_y = ui::pollAxis(1);
+		constexpr float DEAD_ZONE = 0.3f;
+		constexpr Uint64 TIME_DELTA = 1000;
+
+		/*
+		if(traversing) {
+			constexpr Uint64 TRAVERSE_DELTA = 500;
+			if(last_traversal + TRAVERSE_DELTA < now) {
+				if(axis_y < -DEAD_ZONE) {
+					up();
+				} else if(axis_y > DEAD_ZONE) {
+					down();
+				}
+			}
+		}
+		*/
+
+		if(axis_y < -DEAD_ZONE) {
+			if(within(-DEAD_ZONE, DEAD_ZONE, prev_axis_y)) {
+				up();
+			}
+			/*
+			if(prev_axis_motion_timestamp + TIME_DELTA < now) {
+				traversing = true;
+				prev_axis_motion_timestamp = now;
+			}
+			*/
+		} else if(axis_y > DEAD_ZONE) {
+			if(within(-DEAD_ZONE, DEAD_ZONE, prev_axis_y)) {
+				down();
+			}
+			/*
+			if(prev_axis_motion_timestamp + TIME_DELTA < now) {
+				traversing = true;
+				prev_axis_motion_timestamp = now;
+			}
+			*/
+		} else {
+			traversing = false;
+		
+		}
+		prev_axis_y = axis_y;
+		
+
 		SDL_RenderClear(ui::renderer);
 		ui::draw(background);
+		
+		auto target_rect = &texts[selection];
 
 		auto sel_rect = SDL_Rect{
 			.x = 100,
-			.y = 0,
-			.w = 200,
+			.y = target_rect->rect.y,
+			.w = target_rect->rect.w,
 			.h = 100,
 		};
 
-		auto target_rect = &texts[selection];
+		marker_border.setOffset(sel_rect.x, sel_rect.y + 50);
+		ui::draw(marker_border);
+		marker_border.setOffset(sel_rect.x + sel_rect.w, sel_rect.y + 50);
+		ui::draw(marker_border);
 
-		sel_rect.w = target_rect->rect.w;
-		sel_rect.y = target_rect->rect.y;
 		SDL_SetRenderDrawColor(ui::renderer, 255, 255, 255, 255);
 		SDL_RenderFillRect(ui::renderer, &sel_rect);
 

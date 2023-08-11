@@ -1,18 +1,43 @@
 #include "math.hpp"
 #include "ui.hpp"
 
+#include <SDL2/SDL_hints.h>
+#include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
+
 #include <iostream>
 
 SDL_Window* ui::window;
 SDL_Renderer* ui::renderer;
 
+SDL_Joystick* pad = nullptr;
+
 namespace ui {
 
 auto Text::destroy() -> void {
 	SDL_DestroyTexture(this->texture);
+}
+
+auto Polygon::move(float x, float y) -> void {
+	offset_x += x;
+	offset_y += y;
+
+	for(auto& v : vertices) {
+		v.position.x += x;
+		v.position.y += y;
+	}
+}
+
+auto Polygon::setOffset(float x, float y) -> void {
+	for(auto& v : vertices) {
+		v.position.x += x - offset_x;
+		v.position.y += y - offset_y;
+	}
+	
+	offset_x = x;
+	offset_y = y;
 }
 
 auto init() -> void {
@@ -40,9 +65,29 @@ auto init() -> void {
 	//TODO: check renderer
 
 	SDL_ShowCursor(SDL_DISABLE);
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+	if( SDL_NumJoysticks() < 1 ) {
+		printf( "Warning: No joysticks connected!\n" );
+	} else {
+		pad = SDL_JoystickOpen(0);
+		if(pad == NULL) {
+			printf( "Warning: Unable to open game controller! SDL Error: %s\n", SDL_GetError() );
+		}
+	}
+}
+
+auto pollAxis(Uint32 axis) -> float {
+	auto p = SDL_JoystickGetAxis(pad, axis);
+	return normalize(p, std::numeric_limits<Sint16>::max());
 }
 
 auto quit() -> void {
+	if(pad != nullptr) {
+		SDL_JoystickClose(pad);
+
+	}
 	SDL_ShowCursor(SDL_ENABLE);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
@@ -64,6 +109,17 @@ auto draw(const Text& text) -> void {
 }
 
 auto draw(const Polygon& polygon) -> void {
+	SDL_RenderGeometry(
+			ui::renderer, 
+			nullptr, 
+			polygon.vertices.data(), 
+			polygon.vertices.size(), 
+			polygon.indicies.data(), 
+			polygon.indicies.size());
+
+}
+
+auto draw(const Polygon& polygon, int x, int y) -> void {
 	SDL_RenderGeometry(
 			ui::renderer, 
 			nullptr, 
