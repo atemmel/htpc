@@ -162,13 +162,13 @@ auto main() -> int {
 
 		auto now = SDL_GetTicks64();
 		auto axis_y = ui::pollAxis(1);
-		constexpr float DEAD_ZONE = 0.3f;
-		constexpr Uint64 TIME_DELTA = 1000;
+		constexpr float DEAD_ZONE = 0.1f;
+		constexpr Uint64 TIME_DELTA = 500;
 
-		/*
 		if(traversing) {
-			constexpr Uint64 TRAVERSE_DELTA = 500;
+			constexpr Uint64 TRAVERSE_DELTA = 100;
 			if(last_traversal + TRAVERSE_DELTA < now) {
+				last_traversal = now;
 				if(axis_y < -DEAD_ZONE) {
 					up();
 				} else if(axis_y > DEAD_ZONE) {
@@ -176,28 +176,25 @@ auto main() -> int {
 				}
 			}
 		}
-		*/
 
 		if(axis_y < -DEAD_ZONE) {
 			if(within(-DEAD_ZONE, DEAD_ZONE, prev_axis_y)) {
 				up();
+				prev_axis_motion_timestamp = now;
 			}
-			/*
 			if(prev_axis_motion_timestamp + TIME_DELTA < now) {
 				traversing = true;
 				prev_axis_motion_timestamp = now;
 			}
-			*/
 		} else if(axis_y > DEAD_ZONE) {
 			if(within(-DEAD_ZONE, DEAD_ZONE, prev_axis_y)) {
 				down();
+				prev_axis_motion_timestamp = now;
 			}
-			/*
 			if(prev_axis_motion_timestamp + TIME_DELTA < now) {
 				traversing = true;
 				prev_axis_motion_timestamp = now;
 			}
-			*/
 		} else {
 			traversing = false;
 		
