@@ -1,18 +1,34 @@
 #include "math.hpp"
 #include "ui.hpp"
+#include "ui/list.hpp"
 
 #include <SDL2/SDL_hints.h>
 #include <SDL2/SDL_joystick.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
 
 #include <iostream>
+#include <list>
+#include <memory>
 
+ui::Widget* ui::active_widget;
 SDL_Window* ui::window;
 SDL_Renderer* ui::renderer;
+TTF_Font* ui::font;
 
-SDL_Joystick* pad = nullptr;
+std::list<std::unique_ptr<ui::Widget>> widgets;
+
+struct PadState {
+	Uint64 prev_axis_motion_timestamp = 0;
+	float prev_axis_y = 0;
+	bool repeat_axis = false;
+	Uint64 last_repeat_axis = 0;
+	SDL_Joystick* internal = nullptr;
+};
+
+PadState pad;
 
 namespace ui {
 
@@ -44,6 +60,14 @@ auto init() -> void {
 	SDL_Init(SDL_INIT_EVERYTHING); //TODO: check this
 	TTF_Init();
 
+	pad.prev_axis_motion_timestamp = SDL_GetTicks64();
+	pad.last_repeat_axis = SDL_GetTicks64();
+
+	font = TTF_OpenFont("/usr/share/fonts/noto/NotoSans-Medium.ttf", 64);
+	if(font == nullptr) {
+		std::cerr << "Could not open font: " << SDL_GetError() << "\n";
+	}
+
 	auto mode = displayMode();
 
 	constexpr Uint32 window_flags = 0
@@ -71,28 +95,94 @@ auto init() -> void {
 	if( SDL_NumJoysticks() < 1 ) {
 		printf( "Warning: No joysticks connected!\n" );
 	} else {
-		pad = SDL_JoystickOpen(0);
-		if(pad == NULL) {
+		pad.internal = SDL_JoystickOpen(0);
+		if(pad.internal == NULL) {
 			printf( "Warning: Unable to open game controller! SDL Error: %s\n", SDL_GetError() );
 		}
 	}
 }
 
-auto pollAxis(Uint32 axis) -> float {
-	auto p = SDL_JoystickGetAxis(pad, axis);
-	return normalize(p, std::numeric_limits<Sint16>::max());
-}
-
 auto quit() -> void {
-	if(pad != nullptr) {
-		SDL_JoystickClose(pad);
-
+	widgets.clear();
+	if(pad.internal != nullptr) {
+		SDL_JoystickClose(pad.internal);
 	}
 	SDL_ShowCursor(SDL_ENABLE);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	TTF_Quit();
 	SDL_Quit();
+}
+
+auto pollEvents() -> bool {
+	for(SDL_Event event; SDL_PollEvent(&event);) {
+		switch (event.type) {
+			case SDL_QUIT:
+				return false;
+				break;
+			case SDL_KEYDOWN:
+				switch(event.key.keysym.sym) {
+					case SDLK_F12:
+						return false;
+						break;
+					case SDLK_k:
+						active_widget->up();
+						break;
+					case SDLK_j:
+						active_widget->down();
+						break;
+				}
+				break;
+		}
+
+		auto now = SDL_GetTicks64();
+		auto axis_y = ui::pollAxis(1);
+		constexpr float DEAD_ZONE = 0.1f;
+		constexpr Uint64 TIME_DELTA = 500;
+
+		if(pad.repeat_axis) {
+			constexpr Uint64 TRAVERSE_DELTA = 100;
+			if(pad.last_repeat_axis + TRAVERSE_DELTA < now) {
+				pad.last_repeat_axis = now;
+				if(axis_y < -DEAD_ZONE) {
+					active_widget->up();
+				} else if(axis_y > DEAD_ZONE) {
+					active_widget->down();
+				}
+			}
+		}
+
+		if(axis_y < -DEAD_ZONE) {
+			if(within(-DEAD_ZONE, DEAD_ZONE, pad.prev_axis_y)) {
+				active_widget->up();
+				pad.prev_axis_motion_timestamp = now;
+			}
+			if(pad.prev_axis_motion_timestamp + TIME_DELTA < now) {
+				pad.repeat_axis = true;
+				pad.prev_axis_motion_timestamp = now;
+			}
+		} else if(axis_y > DEAD_ZONE) {
+			if(within(-DEAD_ZONE, DEAD_ZONE, pad.prev_axis_y)) {
+				active_widget->down();
+				pad.prev_axis_motion_timestamp = now;
+			}
+			if(pad.prev_axis_motion_timestamp + TIME_DELTA < now) {
+				pad.repeat_axis = true;
+				pad.prev_axis_motion_timestamp = now;
+			}
+		} else {
+			pad.repeat_axis = false;
+		
+		}
+		pad.prev_axis_y = axis_y;
+		
+	}
+	return true;
+}
+
+auto pollAxis(Uint32 axis) -> float {
+	auto p = SDL_JoystickGetAxis(pad.internal, axis);
+	return normalize(p, std::numeric_limits<Sint16>::max());
 }
 
 auto displayMode() -> SDL_DisplayMode {
@@ -104,8 +194,19 @@ auto displayMode() -> SDL_DisplayMode {
 	return mode;
 }
 
+auto drawWidgets() -> void {
+	active_widget->draw();
+}
+
 auto draw(const Text& text) -> void {
 	SDL_RenderCopy(ui::renderer, text.texture, nullptr, &text.rect);
+}
+
+auto draw(const Text& text, Uint32 x, Uint32 y) -> void{
+	auto r = text.rect;
+	r.x += x;
+	r.y += y;
+	SDL_RenderCopy(ui::renderer, text.texture, nullptr, &r);
 }
 
 auto draw(const Polygon& polygon) -> void {
@@ -130,7 +231,8 @@ auto draw(const Polygon& polygon, int x, int y) -> void {
 
 }
 
-auto circle(int n_segments, float r, SDL_FPoint center, SDL_Color color) -> ui::Polygon {
+auto circle(int n_segments, float r, SDL_Color color) -> ui::Polygon {
+	auto center = SDL_FPoint{ 0.f, 0.f};
 	ui::Polygon shape;
     shape.vertices.resize(n_segments + 1);
     float segRotationAngle = (360.f / n_segments) * (Pi / 180.f);
@@ -178,6 +280,11 @@ auto text(TTF_Font* font, const char* text, SDL_Color color) -> Text {
 		.texture = texture,
 		.rect = rect,
 	};
+}
+
+auto registerWidget(std::unique_ptr<Widget>&& widget) -> Widget* {
+	widgets.push_back(std::move(widget));
+	return widgets.back().get();
 }
 
 }

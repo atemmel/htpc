@@ -1,6 +1,7 @@
 #include "image.hpp"
 #include "math.hpp"
 #include "ui.hpp"
+#include "ui/list.hpp"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_blendmode.h>
@@ -34,74 +35,27 @@ auto background_gradient_stop = SDL_Color{
 	.a = 255,
 };
 
-auto fg = SDL_Color{255, 255, 255, 255};
-
-size_t selection = 0;
-
-std::vector<ui::Text> texts;
-
-auto select(size_t idx) -> void {
-	SDL_SetTextureColorMod(texts[idx].texture, 50, 50, 50);
-}
-
-auto unselect(size_t idx) -> void {
-	SDL_SetTextureColorMod(texts[idx].texture, 255, 255, 255);
-}
-
-auto up() -> void {
-	if(selection == 0) {
-		return;
-	}
-	unselect(selection);
-	selection--;
-	select(selection);
-}
-
-auto down() -> void {
-	if(selection == texts.size() -1) {
-		return;
-	}
-	unselect(selection);
-	selection++;
-	select(selection);
-}
-
 auto main() -> int {
 	ui::init();
-	
-	auto font = TTF_OpenFont("/usr/share/fonts/noto/NotoSans-Medium.ttf", 64);
-	if(font == nullptr) {
-		std::cerr << "Could not open font: " << SDL_GetError() << "\n";
-		return EXIT_FAILURE;
-	}
 
+	ui::active_widget = {
+		ui::list(200, 100, {
+			"Start",
+			"Media",
+			"Settings",
+			"A",
+			"B",
+			"C",
+			"D",
+			"E",
+			"F",
+		}),
+	};
+	
 	auto mode = ui::displayMode();
 	
 	auto w = mode.w;
 	auto h = mode.h;
-
-	std::vector<std::string> menu = {
-		"Start",
-		"Media",
-		"Settings",
-		"A",
-		"B",
-		"C",
-		"D",
-		"E",
-		"F",
-	};
-
-	texts.reserve(menu.size());
-	{
-		Uint32 y = 200;
-		for(auto& str : menu) {
-			texts.push_back(ui::text(font, str.c_str(), fg));
-			texts.back().rect.x = 100;
-			texts.back().rect.y = y;
-			y += 100;
-		}
-	}
 
 	const auto start = background_gradient_start, stop = background_gradient_stop;
 
@@ -127,113 +81,16 @@ auto main() -> int {
 		},
 
 	};
-
-	auto marker_border = ui::circle(50, 50.f, {0.f, 0.f}, {255, 255, 255, 255});
-
-	select(selection);
-
-	Uint64 prev_axis_motion_timestamp = SDL_GetTicks64();
-	float prev_axis_y = 0;
-	bool traversing = false;
-	Uint64 last_traversal = SDL_GetTicks64();
 	
 	auto running = true;
 	while(running) {
-		for(SDL_Event event; SDL_PollEvent(&event);) {
-			switch (event.type) {
-				case SDL_QUIT:
-					running = false;
-					break;
-				case SDL_KEYDOWN:
-					switch(event.key.keysym.sym) {
-						case SDLK_F12:
-							running = false;
-							break;
-						case SDLK_k:
-							up();
-							break;
-						case SDLK_j:
-							down();
-							break;
-					}
-					break;
-			}
-		}
-
-		auto now = SDL_GetTicks64();
-		auto axis_y = ui::pollAxis(1);
-		constexpr float DEAD_ZONE = 0.1f;
-		constexpr Uint64 TIME_DELTA = 500;
-
-		if(traversing) {
-			constexpr Uint64 TRAVERSE_DELTA = 100;
-			if(last_traversal + TRAVERSE_DELTA < now) {
-				last_traversal = now;
-				if(axis_y < -DEAD_ZONE) {
-					up();
-				} else if(axis_y > DEAD_ZONE) {
-					down();
-				}
-			}
-		}
-
-		if(axis_y < -DEAD_ZONE) {
-			if(within(-DEAD_ZONE, DEAD_ZONE, prev_axis_y)) {
-				up();
-				prev_axis_motion_timestamp = now;
-			}
-			if(prev_axis_motion_timestamp + TIME_DELTA < now) {
-				traversing = true;
-				prev_axis_motion_timestamp = now;
-			}
-		} else if(axis_y > DEAD_ZONE) {
-			if(within(-DEAD_ZONE, DEAD_ZONE, prev_axis_y)) {
-				down();
-				prev_axis_motion_timestamp = now;
-			}
-			if(prev_axis_motion_timestamp + TIME_DELTA < now) {
-				traversing = true;
-				prev_axis_motion_timestamp = now;
-			}
-		} else {
-			traversing = false;
-		
-		}
-		prev_axis_y = axis_y;
-		
-
+		running = ui::pollEvents();
 		SDL_RenderClear(ui::renderer);
 		ui::draw(background);
-		
-		auto target_rect = &texts[selection];
-
-		auto sel_rect = SDL_Rect{
-			.x = 100,
-			.y = target_rect->rect.y,
-			.w = target_rect->rect.w,
-			.h = 100,
-		};
-
-		marker_border.setOffset(sel_rect.x, sel_rect.y + 50);
-		ui::draw(marker_border);
-		marker_border.setOffset(sel_rect.x + sel_rect.w, sel_rect.y + 50);
-		ui::draw(marker_border);
-
-		SDL_SetRenderDrawColor(ui::renderer, 255, 255, 255, 255);
-		SDL_RenderFillRect(ui::renderer, &sel_rect);
-
-		for(auto& text : texts) {
-			ui::draw(text);
-		}
-		
+		ui::drawWidgets();
 		SDL_RenderPresent(ui::renderer);
 		SDL_Delay(16);
 	}
 
-	for(auto& text : texts) {
-		text.destroy();
-	}
-
-	TTF_CloseFont(font);
 	ui::quit();
 }
