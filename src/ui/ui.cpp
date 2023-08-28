@@ -1,11 +1,14 @@
 #include "math.hpp"
 #include "ui.hpp"
 #include "ui/list.hpp"
+#include "embed/NotoSansMedium.hpp"
 
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_hints.h>
 #include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_rwops.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
 
@@ -57,23 +60,30 @@ auto Polygon::setOffset(float x, float y) -> void {
 }
 
 auto init() -> void {
-	SDL_Init(SDL_INIT_EVERYTHING); //TODO: check this
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS); //TODO: check this
 	TTF_Init();
 
 	pad.prev_axis_motion_timestamp = SDL_GetTicks64();
 	pad.last_repeat_axis = SDL_GetTicks64();
 
+	auto rw = SDL_RWFromMem((char*)NotoSans_Medium_ttf, NotoSans_Medium_ttf_len);
+	font = TTF_OpenFontRW(rw, 1, 64);
+
+	/*
 	font = TTF_OpenFont("/usr/share/fonts/noto/NotoSans-Medium.ttf", 64);
 	if(font == nullptr) {
 		std::cerr << "Could not open font: " << SDL_GetError() << "\n";
 	}
+	*/
 
 	auto mode = displayMode();
 
 	constexpr Uint32 window_flags = 0
 			| SDL_WINDOW_ALLOW_HIGHDPI 
 			| SDL_WINDOW_ALWAYS_ON_TOP 
+#ifndef __EMSCRIPTEN__
 			| SDL_WINDOW_FULLSCREEN_DESKTOP
+#endif
 			| SDL_WINDOW_SHOWN 
 			| 0;
 
