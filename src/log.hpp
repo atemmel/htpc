@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <utility>
 
@@ -10,6 +11,8 @@
 #endif
 
 #define errprintln(...) dprintImplBase(std::cerr, __FILE__, __LINE__, __VA_ARGS__)
+
+#define fatal(x, ...) do { errprintln(__VA_ARGS__); std::exit(x); } while(false);
 
 auto dprintImpl(std::ostream& os) -> void;
 

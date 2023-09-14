@@ -3,6 +3,7 @@
 #include "math.hpp"
 #include "ui.hpp"
 #include "ui/list.hpp"
+#include <SDL2/SDL_error.h>
 
 #ifdef __EMSCRIPTEN__
 #include "emscripten.h"
@@ -68,7 +69,9 @@ auto Polygon::setOffset(float x, float y) -> void {
 }
 
 auto init() -> void {
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS); //TODO: check this
+	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS)) {
+		fatal(1, "Could not init sdl:", SDL_GetError());
+	}
 	TTF_Init();
 
 	pad.prev_axis_motion_timestamp = SDL_GetTicks64();
@@ -89,15 +92,18 @@ auto init() -> void {
 	constexpr Uint32 window_flags = 0
 			| SDL_WINDOW_ALLOW_HIGHDPI 
 			| SDL_WINDOW_ALWAYS_ON_TOP 
-			| SDL_WINDOW_RESIZABLE
 #ifndef __EMSCRIPTEN__
 			| SDL_WINDOW_FULLSCREEN_DESKTOP
+#else
+			| SDL_WINDOW_RESIZABLE
 #endif
 			| SDL_WINDOW_SHOWN 
 			| 0;
 
 	window = SDL_CreateWindow("htpc", 0, 0, mode.w, mode.h, window_flags);
-	//TODO: check window
+	if(window == nullptr) {
+		fatal(1, "Could not create window:", SDL_GetError());
+	}
 	
 	constexpr Uint32 renderer_flags = 0
 			| SDL_RENDERER_ACCELERATED 
@@ -105,7 +111,10 @@ auto init() -> void {
 			| 0;
 	
 	renderer = SDL_CreateRenderer(window, -1, renderer_flags);
-	//TODO: check renderer
+	if(renderer == nullptr) {
+		SDL_DestroyWindow(window);
+		fatal(1, "Could not create renderer:", SDL_GetError());
+	}
 
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
