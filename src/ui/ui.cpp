@@ -1,7 +1,13 @@
+#include "embed/NotoSansMedium.hpp"
+#include "log.hpp"
 #include "math.hpp"
 #include "ui.hpp"
 #include "ui/list.hpp"
-#include "embed/NotoSansMedium.hpp"
+
+#ifdef __EMSCRIPTEN__
+#include "emscripten.h"
+#include "emscripten/html5.h"
+#endif
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_hints.h>
@@ -32,8 +38,10 @@ struct PadState {
 };
 
 PadState pad;
+bool running = true;
 
 namespace ui {
+auto pollEventsImpl() -> bool;
 
 auto Text::destroy() -> void {
 	SDL_DestroyTexture(this->texture);
@@ -81,6 +89,7 @@ auto init() -> void {
 	constexpr Uint32 window_flags = 0
 			| SDL_WINDOW_ALLOW_HIGHDPI 
 			| SDL_WINDOW_ALWAYS_ON_TOP 
+			| SDL_WINDOW_RESIZABLE
 #ifndef __EMSCRIPTEN__
 			| SDL_WINDOW_FULLSCREEN_DESKTOP
 #endif
@@ -103,13 +112,25 @@ auto init() -> void {
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
 	if( SDL_NumJoysticks() < 1 ) {
-		printf( "Warning: No joysticks connected!\n" );
+		errprintln("Warning: No joysticks connected!");
 	} else {
 		pad.internal = SDL_JoystickOpen(0);
 		if(pad.internal == NULL) {
-			printf( "Warning: Unable to open game controller! SDL Error: %s\n", SDL_GetError() );
+			errprintln("Warning: Unable to open game controller! SDL Error:", SDL_GetError());
 		}
 	}
+}
+
+auto run(void(*loop_body)()) -> void {
+	#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop(loop_body, 0, 1);
+#else
+	while(running) {
+		loop_body();
+		//TODO: fix actual framerate-aware delay
+		SDL_Delay(16);
+	}
+#endif
 }
 
 auto quit() -> void {
@@ -124,11 +145,32 @@ auto quit() -> void {
 	SDL_Quit();
 }
 
-auto pollEvents() -> bool {
+auto pollEvents() -> void {
+	running = pollEventsImpl();
+}
+
+auto pollEventsImpl() -> bool {
+
+#ifdef __EMSCRIPTEN__
+	double w{}, h{};
+	emscripten_get_element_css_size("#canvas", &w, &h);
+	SDL_SetWindowSize(window, (int)w, (int)h );
+#endif
+
 	for(SDL_Event event; SDL_PollEvent(&event);) {
 		switch (event.type) {
 			case SDL_QUIT:
+#ifdef __EMSCRIPTEN__
+				emscripten_cancel_main_loop();
+#endif
 				return false;
+				break;
+			case SDL_WINDOWEVENT:
+				if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
+					const auto w = event.window.data1;
+					const auto h = event.window.data2;
+					//SDL_SetWindowSize(window, w, h);
+				}
 				break;
 			case SDL_KEYDOWN:
 				switch(event.key.keysym.sym) {
@@ -198,7 +240,7 @@ auto pollAxis(Uint32 axis) -> float {
 auto displayMode() -> SDL_DisplayMode {
 	SDL_DisplayMode mode;
 	if(SDL_GetCurrentDisplayMode(0, &mode) != 0) {
-		std::cerr << "Could not get current display mode: " << SDL_GetError() << "\n";
+		errprintln("Could not get current display mode:", SDL_GetError());
 		std::exit(EXIT_FAILURE);
 	}
 	return mode;

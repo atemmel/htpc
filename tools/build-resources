@@ -1,0 +1,5 @@
+#!/usr/bin/sh
+
+[ -z $1 ] || [ -z $2 ] && echo "Requires 2 args, resource to build and hpp file to emit to" && exit 1
+
+strliteral -l 9999999999 "$1" > "$2"

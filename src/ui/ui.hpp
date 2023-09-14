@@ -35,9 +35,11 @@ extern Widget* active_widget;
 
 auto init() -> void;
 
+auto run(void(*ptr)()) -> void;
+
 auto quit() -> void;
 
-auto pollEvents() -> bool;
+auto pollEvents() -> void;
 
 auto pollAxis(Uint32 axis) -> float;
 

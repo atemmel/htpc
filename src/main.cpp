@@ -1,11 +1,8 @@
 #include "image.hpp"
+#include "log.hpp"
 #include "math.hpp"
 #include "ui/ui.hpp"
 #include "ui/list.hpp"
-
-#ifdef __EMSCRIPTEN__
-#include "emscripten.h"
-#endif
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_blendmode.h>
@@ -40,11 +37,9 @@ auto background_gradient_stop = SDL_Color{
 };
 
 ui::Polygon background;
-bool running = true;
-
 
 auto loop_body() -> void {
-	running = ui::pollEvents();
+	ui::pollEvents();
 	SDL_RenderClear(ui::renderer);
 	ui::draw(background);
 	ui::drawWidgets();
@@ -72,7 +67,7 @@ auto main() -> int {
 	
 	auto w = mode.w;
 	auto h = mode.h;
-	std::cout << w << "x" << h << '\n';
+	println(w, "x", h);
 
 	const auto start = background_gradient_start, stop = background_gradient_stop;
 
@@ -85,7 +80,7 @@ auto main() -> int {
 
 	const float w_f = w, h_f = h;
 
-	auto background = ui::Polygon{
+	background = ui::Polygon{
 		.vertices = {
 			{ SDL_FPoint{0.f, 0.f}, start, SDL_FPoint{0}},
 			{ SDL_FPoint{0.f, h_f}, halfway, SDL_FPoint{0}},
@@ -99,14 +94,7 @@ auto main() -> int {
 
 	};
 
-#ifdef __EMSCRIPTEN__
-	emscripten_set_main_loop(loop_body, 0, 1);
-#else
-	while(running) {
-		loop_body();
-		SDL_Delay(16);
-	}
-#endif
+	ui::run(loop_body);
 	
 	ui::quit();
 }
