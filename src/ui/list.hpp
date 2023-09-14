@@ -21,7 +21,7 @@ struct List : Widget {
 
 	virtual auto up() -> void override;
 	virtual auto down() -> void override;
-	virtual auto yes() -> void;
+	virtual auto yes() -> void override;
 
 	auto select(size_t idx) -> void;
 	auto unselect(size_t idx) -> void;

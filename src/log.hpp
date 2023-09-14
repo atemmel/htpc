@@ -5,25 +5,25 @@
 #include <utility>
 
 #ifndef NDEBUG
-#define println(...) dprintImplBase(std::cout, __FILE__, __LINE__, __VA_ARGS__)
+#define println(...) _dprintImplBase(std::cout, __FILE__, __LINE__, __VA_ARGS__)
 #else
 #define println(...) {}
 #endif
 
-#define errprintln(...) dprintImplBase(std::cerr, __FILE__, __LINE__, __VA_ARGS__)
+#define errprintln(...) _dprintImplBase(std::cerr, __FILE__, __LINE__, __VA_ARGS__)
 
 #define fatal(x, ...) do { errprintln(__VA_ARGS__); std::exit(x); } while(false);
 
-auto dprintImpl(std::ostream& os) -> void;
+auto _dprintImpl(std::ostream& os) -> void;
 
 template<typename First, typename... Rest>
-auto dprintImpl(std::ostream& os, First&& first, Rest&& ...rest) -> void {
+auto _dprintImpl(std::ostream& os, First&& first, Rest&& ...rest) -> void {
 	os << first << ' ';
-	dprintImpl(os, std::forward<Rest>(rest)...);
+	_dprintImpl(os, std::forward<Rest>(rest)...);
 }
 
 template<typename... Rest>
-auto dprintImplBase(std::ostream& os, const char* file, uint64_t line, Rest&& ...rest) -> void {
+auto _dprintImplBase(std::ostream& os, const char* file, uint64_t line, Rest&& ...rest) -> void {
 	os << file << " @ " << line << ": ";
-	dprintImpl(os, std::forward<Rest>(rest)...);
+	_dprintImpl(os, std::forward<Rest>(rest)...);
 }

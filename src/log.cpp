@@ -1,5 +1,5 @@
 #include "log.hpp"
 
-auto dprintImpl(std::ostream& os) -> void {
+auto _dprintImpl(std::ostream& os) -> void {
 	os << '\n';
 }

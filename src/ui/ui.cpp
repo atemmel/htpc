@@ -72,6 +72,7 @@ auto init() -> void {
 	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS)) {
 		fatal(1, "Could not init sdl:", SDL_GetError());
 	}
+	SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" );
 	TTF_Init();
 
 	pad.prev_axis_motion_timestamp = SDL_GetTicks64();

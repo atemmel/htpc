@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+/*
 auto background_gradient_start = SDL_Color{
 	.r = 50,
 	.g = 0,
@@ -33,6 +34,21 @@ auto background_gradient_stop = SDL_Color{
 	.r = 105,
 	.g = 0,
 	.b = 105,
+	.a = 255,
+};
+*/
+
+auto background_gradient_start = SDL_Color{
+	.r = 255,
+	.g = 44,
+	.b = 112,
+	.a = 255,
+};
+
+auto background_gradient_stop = SDL_Color{
+	.r = 255,
+	.g = 185,
+	.b = 112,
 	.a = 255,
 };
 

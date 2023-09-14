@@ -10,6 +10,7 @@ struct Widget {
 	virtual auto draw() -> void = 0;
 	virtual auto up() -> void {};
 	virtual auto down() -> void {};
+	virtual auto yes() -> void {};
 
 	Uint32 x = 0, y = 0;
 };
