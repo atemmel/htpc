@@ -4,6 +4,7 @@
 #include "ui.hpp"
 #include "ui/list.hpp"
 #include <SDL2/SDL_error.h>
+#include <SDL2/SDL_keycode.h>
 
 #ifdef __EMSCRIPTEN__
 #include "emscripten.h"
@@ -192,6 +193,11 @@ auto pollEventsImpl() -> bool {
 						break;
 					case SDLK_j:
 						active_widget->down();
+						break;
+					case SDLK_KP_SPACE:
+					case SDLK_KP_ENTER:
+					case SDLK_RETURN:
+						active_widget->yes();
 						break;
 				}
 				break;

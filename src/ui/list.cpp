@@ -1,4 +1,5 @@
 #include "list.hpp"
+#include "log.hpp"
 #include "ui.hpp"
 
 #include <memory>
@@ -55,7 +56,12 @@ auto List::down() -> void {
 }
 
 auto List::yes() -> void {
-
+	auto elem = &elements[selection];
+	if(elem->fn == nullptr) {
+		errprintln("No handler registered for (", elem->string, ')');
+	} else {
+		elem->fn();
+	}
 }
 
 auto List::select(size_t idx) -> void {
@@ -67,18 +73,19 @@ auto List::unselect(size_t idx) -> void {
 }
 
 
-auto list(int x, int y, const std::vector<std::string> &strings) -> Widget* {
+auto list(int x, int y, const std::vector<List::Option> &options) -> Widget* {
 	auto l = std::make_unique<List>();
 	l->x = x;
 	l->y = y;
 	l->selection = 0;
-	l->elements.reserve(strings.size());
+	l->elements.reserve(options.size());
 	{
 		Uint32 y = 0;
-		for(auto& str : strings) {
+		for(auto& opt : options) {
 			l->elements.push_back({
-				.string = str,
-				.text = ui::text(ui::font, str.c_str(), fg),
+				.fn = opt.fn,
+				.text = ui::text(ui::font, opt.string.c_str(), fg),
+				.string = opt.string,
 			});
 			auto e = &l->elements.back();
 			e->text.rect.x = 0;

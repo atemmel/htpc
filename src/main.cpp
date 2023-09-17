@@ -1,6 +1,7 @@
 #include "image.hpp"
 #include "log.hpp"
 #include "math.hpp"
+#include "steam/steam.hpp"
 #include "ui/ui.hpp"
 #include "ui/list.hpp"
 
@@ -67,23 +68,30 @@ auto main() -> int {
 
 	ui::active_widget = {
 		ui::list(200, 100, {
-			"Start",
-			"Media",
-			"Settings",
-			"A",
-			"B",
-			"C",
-			"D",
-			"E",
-			"F",
+			{"Start", []() {
+				println("start pressed");
+			}},
+			{"Media",},
+			{"Settings",},
+			{"A",},
+			{"B",},
+			{"C",},
+			{"D",},
+			{"E",},
+			{"F",},
 		}),
 	};
+
+	auto games = steam::games();
+	for(const auto& g : games) {
+		println(g);
+	}
 	
 	auto mode = ui::displayMode();
 	
 	auto w = mode.w;
 	auto h = mode.h;
-	println(w, "x", h);
+	println("resolution", w, "x", h);
 
 	const auto start = background_gradient_start, stop = background_gradient_stop;
 

@@ -1,4 +1,6 @@
 #pragma once
+#include "steam/steam.hpp"
+
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>

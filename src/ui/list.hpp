@@ -3,6 +3,7 @@
 #include "ui.hpp"
 #include "ui/widget.hpp"
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -10,9 +11,17 @@
 namespace ui {
 
 struct List : Widget {
-	struct Element {
+	using Fn = std::function<void()>;
+
+	struct Option {
 		std::string string;
+		Fn fn;
+	};
+
+	struct Element {
+		Fn fn;
 		Text text;
+		std::string string;
 	};
 
 	~List();
@@ -32,6 +41,6 @@ struct List : Widget {
 	size_t selection = 0;
 };
 
-auto list(int x, int y, const std::vector<std::string> &strings) -> Widget*;
+auto list(int x, int y, const std::vector<List::Option> &handlers) -> Widget*;
 
 }
