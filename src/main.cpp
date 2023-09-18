@@ -6,18 +6,6 @@
 #include "ui/list.hpp"
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_blendmode.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_mouse.h>
-#include <SDL2/SDL_pixels.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_stdinc.h>
-#include <SDL2/SDL_surface.h>
-#include <SDL2/SDL_timer.h>
-#include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_video.h>
 
 #include <iostream>
 #include <string>
