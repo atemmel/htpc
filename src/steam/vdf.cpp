@@ -1,13 +1,12 @@
-#include "fstream"
-#include "iostream"
+#include <fstream>
+#include <iostream>
 
-using namespace std;
-
-void read_vdf(string path) {
-    ifstream stream;
+void read_vdf(std::string path) {
+	std::ifstream stream;
     stream.open(path, std::ios::in);
 
-    while (char c = stream.get()) 
-        cout << c;
+    while (char c = stream.get()) {
+        std::cout << c;
+	}
 }
 
