@@ -56,10 +56,20 @@ auto main() -> int {
 
 	ui::active_widget = {
 		ui::list(200, 100, {
-			{"Start", []() {
-				println("start pressed");
+			{"Start", [](){
+				auto games = steam::games();
+				std::vector<ui::List::Option> options;
+				for(auto g : games) {
+					options.push_back({
+						.string = g.title,
+					});
+				}
+				return ui::list(200, 100, options);
 			}},
-			{"Media",},
+			{"Media", []() {
+				println("media pressed");
+				return nullptr;
+			}},
 			{"Settings",},
 			{"A",},
 			{"B",},

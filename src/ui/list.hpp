@@ -11,7 +11,7 @@
 namespace ui {
 
 struct List : Widget {
-	using Fn = std::function<void()>;
+	using Fn = std::function<Widget*()>;
 
 	struct Option {
 		std::string string;

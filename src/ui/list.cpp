@@ -57,10 +57,13 @@ auto List::down() -> void {
 
 auto List::yes() -> void {
 	auto elem = &elements[selection];
-	if(elem->fn == nullptr) {
-		errprintln("No handler registered for (", elem->string, ')');
+	if(elem->fn != nullptr) {
+		auto widget = elem->fn();
+		if(widget != nullptr) {
+			ui::active_widget = widget;
+		}
 	} else {
-		elem->fn();
+		errprintln("No handler registered for (", elem->string, ')');
 	}
 }
 
