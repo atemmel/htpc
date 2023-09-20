@@ -4,6 +4,7 @@
 #include "steam/steam.hpp"
 #include "ui/ui.hpp"
 #include "ui/list.hpp"
+#include "ui/widget.hpp"
 
 #include <SDL2/SDL.h>
 
@@ -44,7 +45,7 @@ auto background_gradient_stop = SDL_Color{
 
 ui::Polygon background;
 
-auto loop_body() -> void {
+auto loopBody() -> void {
 	ui::pollEvents();
 	SDL_RenderClear(ui::renderer);
 	ui::draw(background);
@@ -52,28 +53,30 @@ auto loop_body() -> void {
 	SDL_RenderPresent(ui::renderer);
 };
 
+auto steam_games_list() -> ui::Widget* {
+	auto games = steam::games();
+	auto options = std::vector<ui::List::Option>();
+	for(auto& g : games) {
+		auto appid = g.appid;
+		options.push_back({
+			.string = g.title,
+			.fn = [appid](){
+				const std::string base = "steam steam://run/";
+				auto cmd = base + std::to_string(appid);
+				system(cmd.c_str());
+				return nullptr;
+			},
+		});
+	}
+	return ui::list(200, 100, options);
+}
+
 auto main() -> int {
 	ui::init();
 
 	ui::active_widget = {
 		ui::list(200, 100, {
-			{"Start", [](){
-				auto games = steam::games();
-				std::vector<ui::List::Option> options;
-				for(auto& g : games) {
-					auto appid = g.appid;
-					options.push_back({
-						.string = g.title,
-						.fn = [appid](){
-							const std::string base = "steam steam://run/";
-							auto cmd = base + std::to_string(appid);
-							system(cmd.c_str());
-							return nullptr;
-						},
-					});
-				}
-				return ui::list(200, 100, options);
-			}},
+			{"Start", steam_games_list, },
 			{"Media", []() {
 				println("media pressed");
 				return nullptr;
@@ -124,7 +127,7 @@ auto main() -> int {
 
 	};
 
-	ui::run(loop_body);
+	ui::run(loopBody);
 	
 	ui::quit();
 }
