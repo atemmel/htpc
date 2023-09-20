@@ -43,6 +43,8 @@ auto pollEvents() -> void;
 
 auto pollAxis(Uint32 axis) -> float;
 
+auto clear() -> void;
+
 auto drawWidgets() -> void;
 
 auto draw(const Text& text) -> void;

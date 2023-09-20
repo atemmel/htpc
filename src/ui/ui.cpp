@@ -119,6 +119,10 @@ auto init() -> void {
 		fatal(1, "Could not create renderer:", SDL_GetError());
 	}
 
+	//TODO: rethink for e.g 4K, scale retroactively
+	//SDL_RenderSetLogicalSize(renderer, 1280, 800);
+	//SDL_RenderSetLogicalSize(renderer, 3840, 2160);
+
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -261,6 +265,11 @@ auto displayMode() -> SDL_DisplayMode {
 		std::exit(EXIT_FAILURE);
 	}
 	return mode;
+}
+
+auto clear() -> void {
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
 }
 
 auto drawWidgets() -> void {

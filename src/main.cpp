@@ -47,13 +47,13 @@ ui::Polygon background;
 
 auto loopBody() -> void {
 	ui::pollEvents();
-	SDL_RenderClear(ui::renderer);
+	ui::clear();
 	ui::draw(background);
 	ui::drawWidgets();
 	SDL_RenderPresent(ui::renderer);
 };
 
-auto steam_games_list() -> ui::Widget* {
+auto steamGamesList() -> ui::Widget* {
 	auto games = steam::games();
 	auto options = std::vector<ui::List::Option>();
 	for(auto& g : games) {
@@ -76,7 +76,7 @@ auto main() -> int {
 
 	ui::active_widget = {
 		ui::list(200, 100, {
-			{"Start", steam_games_list, },
+			{"Start", steamGamesList, },
 			{"Media", []() {
 				println("media pressed");
 				return nullptr;
