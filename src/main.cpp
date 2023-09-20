@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 /*
@@ -59,9 +60,16 @@ auto main() -> int {
 			{"Start", [](){
 				auto games = steam::games();
 				std::vector<ui::List::Option> options;
-				for(auto g : games) {
+				for(auto& g : games) {
+					auto appid = g.appid;
 					options.push_back({
 						.string = g.title,
+						.fn = [appid](){
+							const std::string base = "steam steam://run/";
+							auto cmd = base + std::to_string(appid);
+							system(cmd.c_str());
+							return nullptr;
+						},
 					});
 				}
 				return ui::list(200, 100, options);
