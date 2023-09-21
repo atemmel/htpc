@@ -11,6 +11,8 @@ struct Game {
 	uint64_t appid;
 };
 
+auto exists() -> bool;
+
 auto games() -> std::vector<Game>;
 
 };

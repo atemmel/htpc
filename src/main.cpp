@@ -27,7 +27,6 @@ auto background_gradient_stop = SDL_Color{
 	.b = 105,
 	.a = 255,
 };
-*/
 
 auto background_gradient_start = SDL_Color{
 	.r = 255,
@@ -42,6 +41,21 @@ auto background_gradient_stop = SDL_Color{
 	.b = 112,
 	.a = 255,
 };
+*/
+
+auto background_gradient_start = SDL_Color{
+	.r = 139,
+	.g = 3,
+	.b = 67,
+	.a = 255,
+};
+
+auto background_gradient_stop = SDL_Color{
+	.r = 105,
+	.g = 0,
+	.b = 5,
+	.a = 255,
+};
 
 ui::Polygon background;
 
@@ -54,6 +68,9 @@ auto loopBody() -> void {
 };
 
 auto steamGamesList() -> ui::Widget* {
+	if(!steam::exists()) {
+		return nullptr;
+	}
 	auto games = steam::games();
 	auto options = std::vector<ui::List::Option>();
 	for(auto& g : games) {
@@ -90,11 +107,6 @@ auto main() -> int {
 			{"F",},
 		}),
 	};
-
-	auto games = steam::games();
-	for(const auto& g : games) {
-		println(g);
-	}
 	
 	auto mode = ui::displayMode();
 	

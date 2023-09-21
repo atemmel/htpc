@@ -64,9 +64,19 @@ auto readAcf(fs::path path) -> Game {
 	};
 }
 
-auto games() -> std::vector<Game> {
+auto path() -> fs::path {
 	fs::path home = getenv("HOME");
 	fs::path steam_path = home / ".local/share/Steam/steamapps/";
+	return steam_path;
+}
+
+auto exists() -> bool {
+	auto steam_path = path();
+	return fs::exists(steam_path);
+}
+
+auto games() -> std::vector<Game> {
+	auto steam_path = path();
 
 	std::vector<Game> games;
 
