@@ -1,5 +1,5 @@
 #include "list.hpp"
-#include "log.hpp"
+#include "core/log.hpp"
 #include "ui.hpp"
 
 #include <memory>

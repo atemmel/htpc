@@ -1,6 +1,6 @@
 #include "embed/NotoSansMedium.hpp"
-#include "log.hpp"
-#include "math.hpp"
+#include "core/log.hpp"
+#include "core/math.hpp"
 #include "ui.hpp"
 #include "ui/list.hpp"
 #include <SDL2/SDL_error.h>

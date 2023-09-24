@@ -1,7 +1,10 @@
-#include "image.hpp"
-#include "log.hpp"
-#include "math.hpp"
+#include "core/fs.hpp"
+#include "http/http.hpp"
+#include "core/log.hpp"
+#include "core/math.hpp"
+#include "spotify/spotify.hpp"
 #include "steam/steam.hpp"
+#include "spotify/auth.hpp"
 #include "ui/ui.hpp"
 #include "ui/list.hpp"
 #include "ui/widget.hpp"
@@ -27,7 +30,9 @@ auto background_gradient_stop = SDL_Color{
 	.b = 105,
 	.a = 255,
 };
+*/
 
+/*
 auto background_gradient_start = SDL_Color{
 	.r = 255,
 	.g = 44,
@@ -43,6 +48,7 @@ auto background_gradient_stop = SDL_Color{
 };
 */
 
+/*
 auto background_gradient_start = SDL_Color{
 	.r = 139,
 	.g = 3,
@@ -54,6 +60,21 @@ auto background_gradient_stop = SDL_Color{
 	.r = 105,
 	.g = 0,
 	.b = 5,
+	.a = 255,
+};
+*/
+
+auto background_gradient_start = SDL_Color{
+	.r = 140,
+	.g = 70,
+	.b = 90,
+	.a = 255,
+};
+
+auto background_gradient_stop = SDL_Color{
+	.r = 75,
+	.g = 30,
+	.b = 75,
 	.a = 255,
 };
 
@@ -89,6 +110,15 @@ auto steamGamesList() -> ui::Widget* {
 }
 
 auto main() -> int {
+	fs::createDirsIfNotAlreadyExists(fs::getProgramDataDir());
+
+	if(!spotify::auth::hasPerformedFirstTimeAuth()) {
+		spotify::auth::performFirstTimeAuth();
+		return 0;
+	} else {
+		spotify::init();
+	}
+	return 0;
 	ui::init();
 
 	ui::active_widget = {
