@@ -84,7 +84,6 @@ auto getAvailableDevices(const auth::Context& ctx) -> AvailableDevices {
 	});
 
 	auto node = encoding::fromJson(response.body);
-	println(node);
 	auto availableDevices = AvailableDevices::fromJson(node.get());
 	return availableDevices;
 }

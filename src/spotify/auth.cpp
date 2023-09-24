@@ -154,7 +154,6 @@ auto performFirstTimeAuth() -> void {
 
 	authStepGetAuthLink(ctx);
 
-	println("Opening", ctx.their_redirect_uri);
 	//TODO: xdg-open (or equiv.)
 	system(("xdg-open " + ctx.their_redirect_uri + " 2> /dev/null").c_str());
 
@@ -162,7 +161,6 @@ auto performFirstTimeAuth() -> void {
 	authStepGetTokenPair(ctx);
 
 	fs::writeAll(ctx.auth_token_raw, tokenPath());
-	println("All ok!");
 }
 
 auto authStepGetAuthLink(FirstTimeContext& ctx) -> void {
@@ -192,7 +190,6 @@ auto authStepGetCode(FirstTimeContext& ctx) -> void {
 	for(auto callback_hit = false; !callback_hit;) {
 		auto client = server.accept();
 		auto request = http::readRequest(client);
-		println(request.path);
 		if(request.path == "/callback") {
 			auto code_param = request.parameters.find("code");
 			if(code_param == request.parameters.end()) {
@@ -224,7 +221,6 @@ auto authStepGetTokenPair(FirstTimeContext& ctx) -> void {
 	};
 
 	auto response = http::post(tokenUrl, headers, body);
-	println(response);
 	auto node = encoding::fromJson(response.body);
 	ctx.auth_token_raw = std::move(response.body);
 	ctx.auth_token = Token::fromJson(node.get());
