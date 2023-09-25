@@ -7,6 +7,8 @@ auto getUserHome() -> std::string_view;
 
 auto getProgramDataDir() -> std::string;
 
+auto getCacheDir() -> std::string;
+
 auto createDirsIfNotAlreadyExists(std::string_view what) -> void;
 
 auto readAll(const char* file) -> std::string;

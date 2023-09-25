@@ -26,6 +26,13 @@ struct Polygon {
 	auto setOffset(float x, float y) -> void;
 };
 
+struct Image {
+	SDL_Texture* texture;
+	SDL_Rect rect;
+
+	auto destroy() -> void;
+};
+
 const auto fg = SDL_Color{255, 255, 255, 255};
 
 extern SDL_Window* window;
@@ -52,6 +59,8 @@ auto draw(const Text& text) -> void;
 auto draw(const Text& text, Uint32 x, Uint32 y) -> void;
 
 auto draw(const Polygon& polygon) -> void;
+
+auto draw(const Image& polygon, Uint32 x, Uint32 y) -> void;
 
 auto displayMode() -> SDL_DisplayMode;
 

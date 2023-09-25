@@ -18,6 +18,10 @@ auto getProgramDataDir() -> std::string {
 	return std::string(getUserHome()) + "/.local/share/htpc";
 }
 
+auto getCacheDir() -> std::string {
+	return std::string(getUserHome()) + "/.local/cache/htpc";
+}
+
 auto createDirsIfNotAlreadyExists(std::string_view what) -> void {
 	std::error_code err;
 	cfs::create_directories(what, err);

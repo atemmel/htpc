@@ -19,5 +19,5 @@ add_executable(TEST ${SOURCES} ${TEST_SOURCES})
 set_property(TARGET htpc PROPERTY CXX_STANDARD 20)
 set_property(TARGET TEST PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(htpc SDL2 SDL2_ttf curl)
-target_link_libraries(TEST SDL2 SDL2_ttf curl)
+target_link_libraries(htpc SDL2 SDL2_ttf SDL2_image curl)
+target_link_libraries(TEST SDL2 SDL2_ttf SDL2_image curl)

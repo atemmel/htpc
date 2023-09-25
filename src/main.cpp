@@ -8,12 +8,14 @@
 #include "ui/ui.hpp"
 #include "ui/list.hpp"
 #include "ui/widget.hpp"
+#include "views/spotify_view.hpp"
 
 #include <SDL2/SDL.h>
 
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
 /*
@@ -109,25 +111,28 @@ auto steamGamesList() -> ui::Widget* {
 	return ui::list(200, 100, options);
 }
 
+auto spotifyView() -> ui::Widget* {
+	return new SpotifyView();
+}
+
 auto main() -> int {
 	fs::createDirsIfNotAlreadyExists(fs::getProgramDataDir());
+	fs::createDirsIfNotAlreadyExists(fs::getCacheDir());
 
 	if(!spotify::auth::hasPerformedFirstTimeAuth()) {
 		spotify::auth::performFirstTimeAuth();
 		return 0;
 	} else {
-		spotify::init();
+		std::thread th(spotify::init);
+		th.detach();
 	}
-	return 0;
+
 	ui::init();
 
 	ui::active_widget = {
 		ui::list(200, 100, {
 			{"Start", steamGamesList, },
-			{"Media", []() {
-				println("media pressed");
-				return nullptr;
-			}},
+			{"Media", spotifyView, },
 			{"Settings",},
 			{"A",},
 			{"B",},

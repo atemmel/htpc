@@ -5,6 +5,7 @@
 #include "ui/list.hpp"
 #include <SDL2/SDL_error.h>
 #include <SDL2/SDL_keycode.h>
+#include <cassert>
 
 #ifdef __EMSCRIPTEN__
 #include "emscripten.h"
@@ -18,6 +19,7 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_rwops.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_video.h>
 
 #include <iostream>
@@ -67,6 +69,10 @@ auto Polygon::setOffset(float x, float y) -> void {
 	
 	offset_x = x;
 	offset_y = y;
+}
+
+auto Image::destroy() -> void {
+	SDL_DestroyTexture(this->texture);
 }
 
 auto init() -> void {
@@ -309,6 +315,13 @@ auto draw(const Polygon& polygon, int x, int y) -> void {
 
 }
 
+auto draw(const Image& image, int x, int y) -> void {
+	auto r = image.rect;
+	r.x += x;
+	r.y += y;
+	SDL_RenderCopy(ui::renderer, image.texture, nullptr, &r);
+}
+
 auto circle(int n_segments, float r, SDL_Color color) -> ui::Polygon {
 	auto center = SDL_FPoint{ 0.f, 0.f};
 	ui::Polygon shape;
@@ -355,6 +368,23 @@ auto text(TTF_Font* font, const char* text, SDL_Color color) -> Text {
 	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
 	SDL_FreeSurface(surface);
 	return Text{
+		.texture = texture,
+		.rect = rect,
+	};
+}
+
+auto image(const char* path) -> Image {
+	auto surface = IMG_Load(path);
+	assert(surface == nullptr);
+	auto rect = SDL_Rect{
+		.x = 0,
+		.y = 0,
+		.w = surface->w,
+		.h = surface->h,
+	};
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+	return Image {
 		.texture = texture,
 		.rect = rect,
 	};
