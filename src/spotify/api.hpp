@@ -100,6 +100,8 @@ struct State {
 
 auto getAvailableDevices(const auth::Context& ctx) -> AvailableDevices;
 
+auto getAlbumArt(const auth::Context& ctx, const Album& album) -> std::vector<std::byte>;
+
 auto state(const auth::Context& ctx) -> State;
 
 auto play(const auth::Context& ctx, std::string_view id) -> void;

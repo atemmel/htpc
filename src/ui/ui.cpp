@@ -4,8 +4,12 @@
 #include "ui.hpp"
 #include "ui/list.hpp"
 #include <SDL2/SDL_error.h>
+#include <SDL2/SDL_gamecontroller.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_surface.h>
 #include <cassert>
+#include <cstddef>
+#include <string_view>
 
 #ifdef __EMSCRIPTEN__
 #include "emscripten.h"
@@ -38,7 +42,9 @@ struct PadState {
 	float prev_axis_y = 0;
 	bool repeat_axis = false;
 	Uint64 last_repeat_axis = 0;
-	SDL_Joystick* internal = nullptr;
+	SDL_GameController* internal = nullptr;
+	bool a = false;
+	bool prev_a = false;
 };
 
 PadState pad;
@@ -72,6 +78,7 @@ auto Polygon::setOffset(float x, float y) -> void {
 }
 
 auto Image::destroy() -> void {
+	SDL_FreeSurface(this->surface);
 	SDL_DestroyTexture(this->texture);
 }
 
@@ -136,7 +143,7 @@ auto init() -> void {
 	if( SDL_NumJoysticks() < 1 ) {
 		errprintln("Warning: No joysticks connected!");
 	} else {
-		pad.internal = SDL_JoystickOpen(0);
+		pad.internal = SDL_GameControllerOpen(0);
 		if(pad.internal == NULL) {
 			errprintln("Warning: Unable to open game controller! SDL Error:", SDL_GetError());
 		}
@@ -158,7 +165,7 @@ auto run(void(*loop_body)()) -> void {
 auto quit() -> void {
 	widgets.clear();
 	if(pad.internal != nullptr) {
-		SDL_JoystickClose(pad.internal);
+		SDL_GameControllerClose(pad.internal);
 	}
 	SDL_ShowCursor(SDL_ENABLE);
 	SDL_DestroyRenderer(renderer);
@@ -215,9 +222,16 @@ auto pollEventsImpl() -> bool {
 		}
 
 		auto now = SDL_GetTicks64();
-		auto axis_y = ui::pollAxis(1);
+		auto axis_y = ui::pollAxis();
 		constexpr float DEAD_ZONE = 0.1f;
 		constexpr Uint64 TIME_DELTA = 500;
+
+		pad.prev_a = pad.a;
+		pad.a = SDL_GameControllerGetButton(pad.internal, SDL_CONTROLLER_BUTTON_A);
+
+		if(!pad.a && pad.prev_a) {
+			active_widget->yes();
+		}
 
 		if(pad.repeat_axis) {
 			constexpr Uint64 TRAVERSE_DELTA = 100;
@@ -259,8 +273,8 @@ auto pollEventsImpl() -> bool {
 	return true;
 }
 
-auto pollAxis(Uint32 axis) -> float {
-	auto p = SDL_JoystickGetAxis(pad.internal, axis);
+auto pollAxis() -> float {
+	auto p = SDL_GameControllerGetAxis(pad.internal, SDL_CONTROLLER_AXIS_LEFTY);
 	return normalize(p, std::numeric_limits<Sint16>::max());
 }
 
@@ -294,17 +308,6 @@ auto draw(const Text& text, Uint32 x, Uint32 y) -> void{
 }
 
 auto draw(const Polygon& polygon) -> void {
-	SDL_RenderGeometry(
-			ui::renderer, 
-			nullptr, 
-			polygon.vertices.data(), 
-			polygon.vertices.size(), 
-			polygon.indicies.data(), 
-			polygon.indicies.size());
-
-}
-
-auto draw(const Polygon& polygon, int x, int y) -> void {
 	SDL_RenderGeometry(
 			ui::renderer, 
 			nullptr, 
@@ -373,9 +376,9 @@ auto text(TTF_Font* font, const char* text, SDL_Color color) -> Text {
 	};
 }
 
-auto image(const char* path) -> Image {
-	auto surface = IMG_Load(path);
-	assert(surface == nullptr);
+auto image(std::string_view path) -> Image {
+	auto surface = IMG_Load(path.data());
+	assert(surface != nullptr);
 	auto rect = SDL_Rect{
 		.x = 0,
 		.y = 0,
@@ -383,8 +386,26 @@ auto image(const char* path) -> Image {
 		.h = surface->h,
 	};
 	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FreeSurface(surface);
 	return Image {
+		.surface = surface,
+		.texture = texture,
+		.rect = rect,
+	};
+}
+
+auto image(const std::vector<std::byte>& bytes) -> Image {
+	auto rw = SDL_RWFromConstMem(bytes.data(), bytes.size());
+	auto surface = IMG_Load_RW(rw, 1);
+	assert(surface != nullptr);
+	auto rect = SDL_Rect{
+		.x = 0,
+		.y = 0,
+		.w = surface->w,
+		.h = surface->h,
+	};
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
+	return Image {
+		.surface = surface,
 		.texture = texture,
 		.rect = rect,
 	};

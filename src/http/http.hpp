@@ -32,7 +32,9 @@ struct Request {
 struct Response {
 	int status;
 	Headers headers;
-	std::string body;
+	std::vector<std::byte> body;
+
+	auto string() const -> std::string_view;
 };
 
 auto readRequest(TcpSocket client) -> Request;

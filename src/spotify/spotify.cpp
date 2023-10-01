@@ -1,5 +1,7 @@
 #include "spotify.hpp"
+#include "core/fs.hpp"
 #include "core/log.hpp"
+#include "core/maybe.hpp"
 #include "core/unit.hpp"
 #include "spotify/api.hpp"
 #include "spotify/auth.hpp"
@@ -17,13 +19,13 @@ bool init_success = false;
 bool requesting = false;
 
 api::State last_state {};
-std::mutex last_state_mutex {};
 
 auto refreshState() -> void;
 
 auto activeDevice() -> api::Device&;
 
 auto init() -> void {
+
 	ctx = auth::readCtx();
 	assert(ctx.token.access_token.size() > 0);
 	assert(ctx.token.refresh_token.size() > 0);
@@ -91,13 +93,17 @@ auto pause() -> void {
 	th.detach();
 }
 
+auto getAlbumart(const api::Album &album) -> Maybe<std::vector<std::byte>> {
+	auto bytes = api::getAlbumArt(ctx, album);
+	println("Fetched", bytes.size(), "bytes");
+	return maybe(std::move(bytes));
+}
+
 auto refreshState() -> void {
 	using namespace std::chrono_literals;
 
 	while(true) {
-		last_state_mutex.lock();
 		last_state = api::state(ctx);
-		last_state_mutex.unlock();
 		std::this_thread::sleep_for(100ms);
 	}
 }

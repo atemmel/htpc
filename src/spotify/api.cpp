@@ -253,17 +253,6 @@ auto Play::toJson() const -> std::string {
 	return encoder.str();
 }
 
-auto state(const auth::Context& ctx) -> State {
-	const static std::string url = std::string(baseUrl) + "/me/player";
-
-	auto response = http::get(url, {
-		{"Authorization", ctx.bearerHeader()},
-	});
-
-	auto node = encoding::fromJson(response.body);
-	return State::fromJson(node.get());
-}
-
 auto getAvailableDevices(const auth::Context& ctx) -> AvailableDevices {
 	const static std::string url = std::string(baseUrl) + "/me/player/devices";
 
@@ -271,8 +260,32 @@ auto getAvailableDevices(const auth::Context& ctx) -> AvailableDevices {
 		{"Authorization", ctx.bearerHeader()},
 	});
 
-	auto node = encoding::fromJson(response.body);
+	auto node = encoding::fromJson(response.string());
 	return AvailableDevices::fromJson(node.get());
+}
+
+auto getAlbumArt(const auth::Context& ctx, const Album& album) -> std::vector<std::byte> {
+	size_t idx = 0;
+	for(size_t i = 0; i < album.images.size(); i++) {
+		if(album.images[i].width > album.images[idx].width) {
+			idx = i;
+		}
+	}
+
+	auto url = album.images[idx].url;
+	auto response = http::get(url);
+	return response.body;
+}
+
+auto state(const auth::Context& ctx) -> State {
+	const static std::string url = std::string(baseUrl) + "/me/player";
+
+	auto response = http::get(url, {
+		{"Authorization", ctx.bearerHeader()},
+	});
+
+	auto node = encoding::fromJson(response.string());
+	return State::fromJson(node.get());
 }
 
 auto pause(const auth::Context& ctx, std::string_view id) -> void {

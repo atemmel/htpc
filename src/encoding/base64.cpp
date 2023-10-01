@@ -1,7 +1,5 @@
 #include "base64.hpp"
 
-#include "core/log.hpp"
-
 constexpr std::string_view table =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 "abcdefghijklmnopqrstuvwxyz"
@@ -9,15 +7,6 @@ constexpr std::string_view table =
 
 namespace encoding {
 
-/*
-RÄTT:
-NTE3YwNTg0NDRkZTNkOWJhNjI0NDI6MWM1MzlkNDdmMmI0NDU3MGFmZDg5YzdiZWM3ZGEzYjk=
-
-FEL:
-NTE3NTVkYjA3YmJjNDYwNTg0NDRkZTNkOWJhNjI0NDI6MWM1MzlkNDdmMmI0NDU3MGFmZDg5YzdiZWM3ZGEzYjk=
-*/
-
-	//TODO: fix this
 auto toBase64(std::string_view view) -> std::string {
 
 	std::string result;
@@ -57,8 +46,7 @@ auto toBase64(std::string_view view) -> std::string {
 
 	unsigned temp;
 	auto cursor = view.begin();
-	for(size_t idx = 0; idx < view.size()/3; idx++)
-	{
+	for(size_t idx = 0; idx < view.size()/3; idx++) {
 		temp  = (*cursor++) << 16; //Convert to big endian
 		temp += (*cursor++) << 8;
 		temp += (*cursor++);

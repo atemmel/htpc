@@ -221,8 +221,8 @@ auto authStepGetTokenPair(FirstTimeContext& ctx) -> void {
 	};
 
 	auto response = http::post(tokenUrl, headers, body);
-	auto node = encoding::fromJson(response.body);
-	ctx.auth_token_raw = std::move(response.body);
+	auto node = encoding::fromJson(response.string());
+	ctx.auth_token_raw = response.string();
 	ctx.auth_token = Token::fromJson(node.get());
 }
 
@@ -238,7 +238,7 @@ auto refresh(Context& context) -> void {
 	};
 
 	auto response = http::post(tokenUrl, headers, body);
-	auto node = encoding::fromJson(response.body);
+	auto node = encoding::fromJson(response.string());
 	auto new_token = Token::fromJson(node.get());
 
 	context.token.access_token = std::move(new_token.access_token);

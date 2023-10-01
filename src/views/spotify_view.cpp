@@ -3,8 +3,14 @@
 #include "core/unit.hpp"
 #include "spotify/spotify.hpp"
 #include "ui/ui.hpp"
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_rwops.h>
 #include <cstdio>
 #include <string>
+
+bool has_image = false;
+ui::Image image;
 
 SpotifyView::SpotifyView() {
 
@@ -23,6 +29,14 @@ auto SpotifyView::draw() -> void {
 	}
 
 	state = spotify::state();
+
+	if(state.is_playing && image.texture == nullptr) {
+		auto maybe_bytes = spotify::getAlbumart(state.item.album);
+		if (maybe_bytes) {
+			auto& bytes = maybe_bytes.value;
+			image = ui::image(bytes);
+		}
+	}
 
 	std::string playing_text;
 	playing_text = state.item.album.artists[0].name;
@@ -45,6 +59,7 @@ auto SpotifyView::draw() -> void {
 	auto playing_text_handle = ui::text(ui::font, playing_text.c_str(), ui::fg);
 	auto time_text_handle = ui::text(ui::font, &buffer[0], ui::fg);
 
+	ui::draw(image, 1100, 400);
 	ui::draw(playing_text_handle, 200, 100);
 	ui::draw(time_text_handle, 200, 200);
 

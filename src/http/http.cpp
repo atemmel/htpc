@@ -10,6 +10,12 @@
 
 namespace http {
 
+auto Response::string() const -> std::string_view {
+	auto ptr = reinterpret_cast<const char*>(this->body.data());
+	auto size = this->body.size();
+	return std::string_view(ptr, size);
+}
+
 auto readRequest(TcpSocket client) -> Request {
 	Request request;
 	auto protocol = client.readUntil('\n');
@@ -87,10 +93,10 @@ auto appendParams(std::string& str, StaticPairs pairs) -> void {
 	}
 }
 
-static auto writeCallback(char* data, size_t n, size_t l, void* userp) -> size_t {
+static auto writeCallback(std::byte* data, size_t n, size_t l, void* userp) -> size_t {
 	size_t real_size = n * l;
 	auto response = reinterpret_cast<Response*>(userp);
-	response->body.append(data, real_size);
+	response->body.insert(response->body.end(), data, data + real_size);
 	return real_size;
 }
 
@@ -227,7 +233,7 @@ auto operator<<(std::ostream& os, const Response& response) -> std::ostream& {
 		<< "\nheaders:"
 		<< response.headers
 		<< "body: "
-		<< response.body;
+		<< response.string();
 }
 
 auto operator<<(std::ostream& os, const Headers& headers) -> std::ostream& {

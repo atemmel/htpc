@@ -4,6 +4,7 @@
 #include <SDL2/SDL_ttf.h>
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
 namespace ui {
@@ -27,6 +28,7 @@ struct Polygon {
 };
 
 struct Image {
+	SDL_Surface* surface;
 	SDL_Texture* texture;
 	SDL_Rect rect;
 
@@ -48,7 +50,7 @@ auto quit() -> void;
 
 auto pollEvents() -> void;
 
-auto pollAxis(Uint32 axis) -> float;
+auto pollAxis() -> float;
 
 auto clear() -> void;
 
@@ -60,7 +62,7 @@ auto draw(const Text& text, Uint32 x, Uint32 y) -> void;
 
 auto draw(const Polygon& polygon) -> void;
 
-auto draw(const Image& polygon, Uint32 x, Uint32 y) -> void;
+auto draw(const Image& image, int x, int y) -> void;
 
 auto displayMode() -> SDL_DisplayMode;
 
@@ -68,6 +70,9 @@ auto circle(int n_segments, float r, SDL_Color color) -> ui::Polygon;
 
 auto text(TTF_Font* font, const char* text, SDL_Color color) -> Text;
 
+auto image(std::string_view path) -> Image;
+
+auto image(const std::vector<std::byte>& bytes) -> Image;
 
 auto registerWidget(std::unique_ptr<Widget>&& widget) -> Widget*;
 
